@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejemplo - Iniciar sesión con Xstar Mail</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #14b4a1;
+      margin-bottom: 30px;
+    }
+    .example {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid #14b4a1;
+    }
+    code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    .button-container {
+      margin: 30px 0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Ejemplo de Integración Xstar OAuth</h1>
+    
+    <div class="example">
+      <h2>Método 1: Super Simple (Recomendado)</h2>
+      <p>Solo agrega el script con data attributes y un contenedor:</p>
+      <pre><code>&lt;!-- Contenedor donde aparecerá el botón --&gt;
+&lt;div data-xstar-oauth 
+     data-client-id="tu-client-id"
+     data-redirect-uri="https://tu-sitio.com/callback"
+     data-button-text="Iniciar sesión con Xstar Mail"&gt;&lt;/div&gt;
+
+&lt;!-- Script de Xstar OAuth --&gt;
+&lt;script 
+  src="https://xstarmail.es/xstar-oauth.js"
+  data-client-id="tu-client-id"
+  data-redirect-uri="https://tu-sitio.com/callback"&gt;
+&lt;/script&gt;</code></pre>
+    </div>
+
+    <div class="example">
+      <h2>Método 2: Con Script Tag</h2>
+      <p>Configura todo desde el script tag:</p>
+      <pre><code>&lt;script 
+  src="https://xstarmail.es/xstar-oauth.js"
+  data-client-id="tu-client-id"
+  data-redirect-uri="https://tu-sitio.com/callback"
+  data-button-text="Iniciar sesión con Xstar Mail"&gt;
+&lt;/script&gt;
+
+&lt;!-- El botón aparecerá automáticamente aquí --&gt;
+&lt;div data-xstar-oauth&gt;&lt;/div&gt;</code></pre>
+    </div>
+
+    <div class="example">
+      <h2>Método 3: Configuración Manual</h2>
+      <p>Control total con JavaScript:</p>
+      <pre><code>&lt;script src="https://xstarmail.es/xstar-oauth.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  XstarOAuth.init({
+    clientId: 'tu-client-id',
+    redirectUri: 'https://tu-sitio.com/callback'
+  });
+  
+  XstarOAuth.renderButton('#mi-boton', {
+    text: 'Iniciar sesión con Xstar Mail'
+  });
+&lt;/script&gt;
+
+&lt;div id="mi-boton"&gt;&lt;/div&gt;</code></pre>
+    </div>
+
+    <h2>🎨 Ejemplo en Vivo</h2>
+    <div class="button-container">
+      <!-- Este es el contenedor donde aparecerá el botón -->
+      <div data-xstar-oauth 
+           data-client-id="demo-client-id"
+           data-redirect-uri="https://ejemplo.com/callback"
+           data-button-text="Iniciar sesión con Xstar Mail">
+      </div>
+    </div>
+
+    <div class="example">
+      <h2>📝 Manejar el Callback</h2>
+      <p>En tu página de callback, escucha el evento:</p>
+      <pre><code>&lt;script&gt;
+  window.addEventListener('xstar-oauth-callback', async function(event) {
+    const { code, state } = event.detail;
+    
+    // Validar state
+    const savedState = sessionStorage.getItem('xstar_oauth_state');
+    if (state !== savedState) {
+      console.error('State mismatch');
+      return;
+    }
+    
+    // Enviar código a tu backend para intercambiarlo por token
+    const response = await fetch('/api/auth/xstar-callback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    
+    const data = await response.json();
+    console.log('Usuario autenticado:', data);
+  });
+&lt;/script&gt;</code></pre>
+    </div>
+  </div>
+
+  <!-- Script de Xstar OAuth con configuración automática -->
+  <script 
+    src="/xstar-oauth.js"
+    data-client-id="demo-client-id"
+    data-redirect-uri="https://ejemplo.com/callback">
+  </script>
+</body>
+</html>
+

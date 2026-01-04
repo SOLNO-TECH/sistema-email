@@ -1,0 +1,31 @@
+# robots.txt para Xstar Mail
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /mailbox
+Disallow: /account
+Disallow: /settings
+Disallow: /domains
+Disallow: /emails
+Disallow: /recovery
+Disallow: /language
+Disallow: /subscription
+Disallow: /feedback
+
+# Googlebot
+User-agent: Googlebot
+Allow: /
+Disallow: /auth
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /mailbox
+Disallow: /account
+Disallow: /settings
+
+# Sitemap
+Sitemap: https://xstarmail.es/sitemap.xml
+

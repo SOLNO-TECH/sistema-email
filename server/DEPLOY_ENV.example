@@ -1,0 +1,96 @@
+# Archivo de ejemplo para variables de entorno en producción
+# Copia este archivo a .env y completa con tus valores reales
+
+# Base de datos MySQL
+# Formato: mysql://usuario:password@host:puerto/nombre_base_datos
+# Ejemplo: mysql://sistema_email_user:tu_password_seguro@localhost:3306/sistema_email
+DATABASE_URL="mysql://usuario:password@localhost:3306/sistema_email"
+
+# Nota: Usa el script setup-database.sh para crear la base de datos automáticamente
+# O crea manualmente:
+# CREATE DATABASE sistema_email CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# CREATE USER 'sistema_email_user'@'localhost' IDENTIFIED BY 'tu_password';
+# GRANT ALL PRIVILEGES ON sistema_email.* TO 'sistema_email_user'@'localhost';
+# FLUSH PRIVILEGES;
+
+# JWT
+JWT_SECRET="cambia-este-secret-por-uno-seguro-y-aleatorio"
+
+# Servidor - PUERTOS (cambia estos valores según necesites)
+BACKEND_PORT=3001
+FRONTEND_PORT=3000
+PORT=3001  # Puerto del backend (debe coincidir con BACKEND_PORT)
+NODE_ENV=production
+
+# Stripe - Para pagos con tarjeta de crédito/débito
+# Obtén tus claves en: https://dashboard.stripe.com/apikeys
+STRIPE_SECRET_KEY="sk_test_..." # En producción usa sk_live_...
+STRIPE_PUBLISHABLE_KEY="pk_test_..." # En producción usa pk_live_...
+STRIPE_WEBHOOK_SECRET="whsec_..." # Para verificar webhooks de Stripe
+
+# PayPal - Para pagos con PayPal
+# Obtén tus credenciales en: https://developer.paypal.com/dashboard/
+PAYPAL_CLIENT_ID="tu_client_id_de_paypal"
+PAYPAL_CLIENT_SECRET="tu_client_secret_de_paypal"
+PAYPAL_MODE="sandbox" # Cambia a "live" en producción
+
+# Frontend URL (para CORS y redirects)
+FRONTEND_URL="http://localhost:3000" # En producción: https://tu-dominio.com
+
+# Email SMTP - Para envío de correos (verificación, recuperación de contraseña, etc.)
+# OPCIÓN 1: Servidor Propio (Postfix) - RECOMENDADO si ya tienes Postfix configurado
+# Si tu servidor Postfix está en el mismo servidor donde corre Node.js:
+EMAIL_SMTP_HOST="localhost"
+EMAIL_SMTP_PORT="587"
+EMAIL_SMTP_USER="admin@fylomail.es"
+EMAIL_SMTP_PASSWORD="tu_contraseña_del_admin"
+EMAIL_FROM_NAME="Fylo Mail"
+
+# Si tu servidor Postfix está en otro servidor:
+# EMAIL_SMTP_HOST="mail.fylomail.es"  # o la IP del servidor (ej: 192.168.1.100)
+# EMAIL_SMTP_PORT="587"
+# EMAIL_SMTP_USER="admin@fylomail.es"
+# EMAIL_SMTP_PASSWORD="tu_contraseña"
+
+# OPCIÓN 2: Gmail (GRATIS - 500 emails/día)
+# 1. Activa verificación en 2 pasos: https://myaccount.google.com/security
+# 2. Genera contraseña de aplicación: https://myaccount.google.com/apppasswords
+# EMAIL_SMTP_HOST="smtp.gmail.com"
+# EMAIL_SMTP_PORT="587"
+# EMAIL_SMTP_USER="tu-email@gmail.com"
+# EMAIL_SMTP_PASSWORD="tu-contraseña-de-aplicacion-de-16-caracteres"
+# EMAIL_FROM_NAME="Fylo Mail"
+
+# OPCIÓN 3: SendGrid (GRATIS - 100 emails/día)
+# Regístrate en: https://signup.sendgrid.com/
+# EMAIL_SMTP_HOST="smtp.sendgrid.net"
+# EMAIL_SMTP_PORT="587"
+# EMAIL_SMTP_USER="apikey"
+# EMAIL_SMTP_PASSWORD="tu-api-key-de-sendgrid"
+
+# OPCIÓN 4: Mailgun (GRATIS - 5,000 emails/mes)
+# Regístrate en: https://signup.mailgun.com/
+# EMAIL_SMTP_HOST="smtp.mailgun.org"
+# EMAIL_SMTP_PORT="587"
+# EMAIL_SMTP_USER="postmaster@tu-dominio.mailgun.org"
+# EMAIL_SMTP_PASSWORD="tu-password-de-mailgun"
+
+# OPCIÓN 5: Resend (GRATIS - 3,000 emails/mes)
+# Regístrate en: https://resend.com/signup
+# EMAIL_SMTP_HOST="smtp.resend.com"
+# EMAIL_SMTP_PORT="587"
+# EMAIL_SMTP_USER="resend"
+# EMAIL_SMTP_PASSWORD="tu-api-key-de-resend"
+
+# OPCIÓN 6: Brevo (GRATIS - 300 emails/día)
+# Regístrate en: https://www.brevo.com/
+# EMAIL_SMTP_HOST="smtp-relay.brevo.com"
+# EMAIL_SMTP_PORT="587"
+# EMAIL_SMTP_USER="tu-email@brevo.com"
+# EMAIL_SMTP_PASSWORD="tu-password-de-brevo"
+
+# NOTA: Si no configuras estas variables, el sistema funcionará pero mostrará
+# los códigos en la consola del servidor (útil para desarrollo).
+# Consulta CONFIGURACION_SMTP.md para más detalles sobre cómo obtener las credenciales.
+
+

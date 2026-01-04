@@ -1,0 +1,361 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int     @id @default(autoincrement())
+  name          String
+  email         String  @unique
+  password      String
+  role          String  @default("user") // "user" o "admin"
+  phone         String? // Número telefónico
+  paymentMethod String? // Método de pago principal (ej: "card", "bank_account", "paypal")
+  paymentDetails String? @db.Text // Detalles del método de pago (JSON stringificado)
+  
+  // Recuperación de cuenta
+  recoveryEmail String? // Email de recuperación
+  recoveryPhone String? // Teléfono de recuperación con código de país
+  recoveryPhoneCountryCode String? // Código de país (ej: "+52")
+  allowEmailRecovery Boolean @default(false)
+  allowPhoneRecovery Boolean @default(false)
+  allowQRLogin Boolean @default(false)
+  
+  // Recuperación de datos
+  recoveryPhrase String? @db.Text // Frase de recuperación (encriptada)
+  allowRecoveryPhrase Boolean @default(false)
+  allowDeviceRecovery Boolean @default(false)
+  recoveryFileHash String? // Hash del archivo de recuperación
+  
+  // Preferencias
+  preferences String? @db.Text // JSON con preferencias (notificaciones, idioma, hora, etc)
+  
+  // Créditos y códigos de regalo
+  credits Float @default(0) // Créditos disponibles
+  appliedGiftCodes String? @db.Text // JSON array con códigos de regalo aplicados
+  
+  // Seguridad avanzada
+  twoPasswordMode Boolean @default(false)
+  twoFactorEnabled Boolean @default(false)
+  twoFactorMethod String? // "app" o "security_key"
+  twoFactorSecret String? @db.Text // Secret para 2FA (encriptado)
+  
+  // Contactos de emergencia
+  emergencyContacts String? @db.Text // JSON array con contactos de emergencia
+
+  Domain Domain[]
+
+  // 🟢 Relación corregida con nombre "OwnerEmails"
+  EmailAccounts EmailAccount[] @relation("OwnerEmails")
+
+  subscriptions Subscription[]
+  invoices      Invoice[]
+  tickets        Ticket[]
+  ticketMessages TicketMessage[]
+  oauthApplications OAuthApplication[]
+  oauthAuthCodes    OAuthAuthCode[]
+  oauthAccessTokens OAuthAccessToken[]
+  createdPromoCodes PromoCode[] @relation("PromoCodeCreator")
+  notifications     Notification[] @relation("UserNotifications")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model Domain {
+  id          Int       @id @default(autoincrement())
+  domainName  String    @unique
+  userId      Int
+  dnsVerified Boolean   @default(false)
+  mxRecord    String?   // Registro MX verificado
+  spfRecord   String?   // Registro SPF verificado
+  dkimRecord  String?   // Registro DKIM verificado
+  dmarcRecord String?   // Registro DMARC verificado
+  lastDnsCheck DateTime? // Última verificación DNS
+  
+  // Configuración SMTP para este dominio
+  smtpProvider String?  @db.VarChar(50) // "sendgrid", "mailgun", "smtp", "gmail"
+  smtpHost     String?  // Host SMTP personalizado
+  smtpPort     Int?     // Puerto SMTP
+  smtpUser     String?   // Usuario SMTP
+  smtpPassword String?   @db.Text // Contraseña SMTP (encriptada)
+  smtpApiKey   String?   @db.Text // API Key para servicios (SendGrid, Mailgun)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime?
+
+  user          User           @relation(fields: [userId], references: [id])
+  emailAccounts EmailAccount[]
+}
+
+model EmailAccount {
+  id          Int       @id @default(autoincrement())
+  address     String    @unique
+  password    String
+  storageUsed Float     @default(0) // almacenamiento usado en GB
+  domainId    Int
+  ownerId     Int?
+  
+  // Configuración SMTP específica para esta cuenta (opcional, hereda del dominio si no está)
+  smtpHost     String?  // Host SMTP personalizado para esta cuenta
+  smtpPort     Int?     // Puerto SMTP
+  smtpUser     String?   // Usuario SMTP (puede ser diferente de address)
+  smtpPassword String?   @db.Text // Contraseña SMTP (encriptada)
+  
+  createdAt   DateTime  @default(now())
+
+  domain Domain @relation(fields: [domainId], references: [id])
+
+  // 🟢 Relación corregida igualando el nombre "OwnerEmails"
+  owner User? @relation("OwnerEmails", fields: [ownerId], references: [id])
+  
+  // Correos de esta cuenta
+  emails Email[]
+}
+
+model Email {
+  id            Int       @id @default(autoincrement())
+  emailAccountId Int     // Cuenta que recibió o envió el correo
+  from          String    // Remitente
+  to            String    // Destinatario
+  subject       String    @db.VarChar(500)
+  body          String    @db.Text
+  htmlBody      String?   @db.Text // Cuerpo HTML opcional
+  isRead        Boolean   @default(false)
+  isSent        Boolean   @default(false) // true si fue enviado, false si fue recibido
+  messageId     String?   @unique // Message-ID del correo
+  inReplyTo     String?   // Message-ID del correo al que responde
+  references    String?   @db.Text // Referencias del hilo
+  priority      String?   @db.VarChar(20) // "high", "normal", "low"
+  receivedAt    DateTime  @default(now())
+  sentAt        DateTime?
+  
+  // Nuevas funcionalidades del mailbox
+  isStarred     Boolean   @default(false) // Correo destacado
+  isArchived    Boolean   @default(false) // Correo archivado
+  isSpam        Boolean   @default(false) // Correo marcado como spam
+  isImportant   Boolean   @default(false) // Correo importante
+  isDraft       Boolean   @default(false) // Borrador
+  isDeleted     Boolean   @default(false) // Correo en papelera
+  folderId      Int?      // ID de la carpeta (null = inbox)
+  labels        String?   @db.Text // JSON array con etiquetas
+  scheduledFor  DateTime? // Fecha programada para envío
+  
+  // Relación
+  account       EmailAccount @relation(fields: [emailAccountId], references: [id], onDelete: Cascade)
+  attachments   EmailAttachment[]
+  
+  @@index([emailAccountId])
+  @@index([isRead])
+  @@index([isSent])
+  @@index([isStarred])
+  @@index([isArchived])
+  @@index([isSpam])
+  @@index([isImportant])
+  @@index([isDraft])
+  @@index([isDeleted])
+  @@index([folderId])
+  @@index([receivedAt])
+}
+
+model Plan {
+  id           Int      @id @default(autoincrement())
+  name         String
+  description  String?
+  priceMonthly Float
+  priceYearly  Float
+  maxEmails    Int      @default(1) // límite de cuentas que puede crear el cliente
+  maxStorageGB Int      @default(1) // límite de almacenamiento en GB por buzón
+  maxDomains   Int      @default(1) // límite de dominios
+  features     String?  // JSON con características adicionales
+  category     String   @default("personas") // "personas" o "empresas"
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  plan      String
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  // 🟢 Relación opuesta requerida
+  invoices Invoice[]
+  Plan     Plan?     @relation(fields: [planId], references: [id])
+  planId   Int?
+}
+
+model Invoice {
+  id             Int  @id @default(autoincrement())
+  userId         Int
+  subscriptionId Int?
+
+  user         User          @relation(fields: [userId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  subject     String    @db.VarChar(255)
+  description String    @db.Text
+  status      String    @default("open") @db.VarChar(50) // "open", "in_progress", "resolved", "closed"
+  priority    String    @default("medium") @db.VarChar(50) // "low", "medium", "high", "urgent"
+  createdAt   DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user        User              @relation(fields: [userId], references: [id])
+  attachments TicketAttachment[]
+  messages    TicketMessage[]
+}
+
+model TicketAttachment {
+  id          Int       @id @default(autoincrement())
+  ticketId    Int
+  fileName    String
+  filePath    String
+  fileSize    Int       // tamaño en bytes
+  mimeType    String    // tipo MIME del archivo
+  createdAt   DateTime  @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model TicketMessage {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  userId    Int      // Usuario que envió el mensaje (puede ser el usuario o admin)
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model EmailAttachment {
+  id          Int       @id @default(autoincrement())
+  emailId     Int
+  fileName    String
+  filePath    String    // Ruta del archivo en el servidor
+  fileSize    Int       // tamaño en bytes
+  mimeType    String    // tipo MIME del archivo
+  contentId   String?   // Content-ID para adjuntos inline
+  createdAt   DateTime  @default(now())
+
+  email Email @relation(fields: [emailId], references: [id], onDelete: Cascade)
+}
+
+// OAuth 2.0 - Aplicaciones registradas
+model OAuthApplication {
+  id          Int       @id @default(autoincrement())
+  name        String    // Nombre de la aplicación
+  description String?   // Descripción de la aplicación
+  website     String?   // URL del sitio web
+  clientId    String    @unique // Client ID único
+  clientSecret String   // Client Secret (hasheado)
+  redirectUris String  @db.Text // JSON array de URIs permitidas
+  userId      Int      // Usuario que creó la aplicación
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authCodes   OAuthAuthCode[]
+  accessTokens OAuthAccessToken[]
+
+  @@index([clientId])
+  @@index([userId])
+}
+
+// OAuth 2.0 - Códigos de autorización
+model OAuthAuthCode {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique // Código de autorización
+  applicationId Int
+  userId      Int      // Usuario que autorizó
+  redirectUri String   // URI de redirección
+  expiresAt   DateTime // Fecha de expiración
+  used        Boolean  @default(false) // Si ya fue usado
+  createdAt   DateTime @default(now())
+
+  application OAuthApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([applicationId])
+  @@index([userId])
+}
+
+// OAuth 2.0 - Tokens de acceso
+model OAuthAccessToken {
+  id            Int       @id @default(autoincrement())
+  token         String    @unique // Token de acceso
+  refreshToken  String?   @unique // Token de refresco (opcional)
+  applicationId Int
+  userId        Int      // Usuario autenticado
+  scope         String?  // Scopes permitidos (JSON array)
+  expiresAt     DateTime // Fecha de expiración
+  createdAt     DateTime @default(now())
+
+  application OAuthApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([refreshToken])
+  @@index([applicationId])
+  @@index([userId])
+}
+
+// Códigos promocionales
+model PromoCode {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique // Código promocional (ej: "WELCOME20")
+  description String?   // Descripción del código
+  discountType String   @default("fixed") // "fixed" (cantidad fija) o "percentage" (porcentaje)
+  discountValue Float   // Valor del descuento (en euros si es fixed, en porcentaje si es percentage)
+  maxUses     Int?      // Número máximo de usos (null = ilimitado)
+  currentUses Int       @default(0) // Número de veces que se ha usado
+  validFrom   DateTime  @default(now()) // Fecha de inicio de validez
+  validUntil  DateTime? // Fecha de expiración (null = sin expiración)
+  isActive    Boolean   @default(true) // Si el código está activo
+  createdBy   Int       // ID del admin que creó el código
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  creator User @relation("PromoCodeCreator", fields: [createdBy], references: [id])
+
+  @@index([code])
+  @@index([isActive])
+  @@index([validUntil])
+}
+
+// Notificaciones del sistema
+model Notification {
+  id          Int       @id @default(autoincrement())
+  userId      Int       // Usuario destinatario
+  type        String    @db.VarChar(50) // "email", "system", "product_update", "announcement", etc.
+  category    String?   @db.VarChar(50) // "email_subscription", "product_update", "app", etc.
+  title       String    @db.VarChar(255)
+  message     String    @db.Text
+  link        String?   // URL opcional para la notificación
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  user User @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([type])
+}
