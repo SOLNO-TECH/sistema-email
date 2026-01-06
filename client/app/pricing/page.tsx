@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -172,7 +172,7 @@ function PricesDropdown() {
   );
 }
 
-export default function PricingPage() {
+function PricingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -940,6 +940,18 @@ export default function PricingPage() {
       </footer>
       </div>
     </>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background/95 to-[#13282b]/10">
+        <Loader2 className="w-8 h-8 animate-spin text-[#14b4a1]" />
+      </div>
+    }>
+      <PricingPageContent />
+    </Suspense>
   );
 }
 

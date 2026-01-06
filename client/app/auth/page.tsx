@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,7 +18,7 @@ import { apiClient, type Plan } from "@/lib/api";
 import { Loader2, Mail, Lock, User, Sparkles, ArrowRight, CheckCircle2, XCircle, Shield, KeyRound, Check, Building2, Users, X } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
-export default function AuthPage() {
+function AuthPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
@@ -2505,6 +2505,18 @@ export default function AuthPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background/95 to-[#13282b]/10">
+        <Loader2 className="w-8 h-8 animate-spin text-[#14b4a1]" />
+      </div>
+    }>
+      <AuthPageContent />
+    </Suspense>
   );
 }
 

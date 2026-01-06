@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
@@ -34,7 +34,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-export default function PlansPage() {
+function PlansPageContent() {
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -465,5 +465,17 @@ export default function PlansPage() {
         </div>
       </SidebarProvider>
     </>
+  );
+}
+
+export default function PlansPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background/95 to-[#13282b]/10">
+        <Loader2 className="w-8 h-8 animate-spin text-[#14b4a1]" />
+      </div>
+    }>
+      <PlansPageContent />
+    </Suspense>
   );
 }
