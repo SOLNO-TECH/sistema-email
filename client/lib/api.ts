@@ -9,6 +9,7 @@ export interface User {
   phone?: string;
   paymentMethod?: string;
   emailVerified?: boolean;
+  preferences?: string;
   paymentDetails?: {
     type?: string;
     last4?: string;
@@ -1269,28 +1270,6 @@ class ApiClient {
     });
   }
 
-  async updateSecuritySettings(data: {
-    twoPasswordMode?: boolean;
-    twoFactorEnabled?: boolean;
-    twoFactorMethod?: string;
-  }): Promise<{ security: any }> {
-    return this.request("/api/user-settings/security", {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
-  }
-
-  async getUserCredits(): Promise<{ credits: number }> {
-    return this.request("/api/user-settings/credits");
-  }
-
-  async addCredits(amount: number): Promise<{ credits: number }> {
-    return this.request("/api/user-settings/credits", {
-      method: "POST",
-      body: JSON.stringify({ amount }),
-    });
-  }
-
   async applyGiftCode(code: string): Promise<{
     message: string;
     creditsAdded: number;
@@ -1372,12 +1351,6 @@ class ApiClient {
     });
   }
 
-  async deleteAccount(password: string): Promise<{ message: string }> {
-    return this.request("/api/user-settings/account", {
-      method: "DELETE",
-      body: JSON.stringify({ password }),
-    });
-  }
 }
 
 // Ticket interfaces

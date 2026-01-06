@@ -415,7 +415,7 @@ export default function RecoveryPage() {
       const recoveryData = {
         userId: user?.id,
         email: user?.email,
-        recoveryPhrase: user?.recoveryPhrase || "No configurada",
+        recoveryPhrase: "No configurada", // La frase de recuperación no está disponible en el objeto User
         timestamp: new Date().toISOString(),
       };
       

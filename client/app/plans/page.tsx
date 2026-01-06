@@ -148,7 +148,7 @@ export default function PlansPage() {
       features.push({ text: "Mensajes al día ilimitados" });
       features.push({ text: "3 dominios de correo electrónico personalizados" });
       features.push({ text: "Soporte prioritario" });
-    } else if (plan.name.toLowerCase().includes("duo") || planCategory === "family") {
+    } else if (plan.name.toLowerCase().includes("duo")) {
       features.push({ text: "Hasta 2 usuarios" });
       features.push({ text: "2 TB de almacenamiento" });
       features.push({ text: "30 direcciones/alias de correo" });

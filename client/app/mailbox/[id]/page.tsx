@@ -285,8 +285,8 @@ export default function MailboxPage() {
         filtered = filtered.filter((e) => e.isImportant && !e.isDeleted);
         break;
       case "all":
-        // Todos los correos excepto eliminados permanentemente
-        filtered = filtered.filter((e) => !e.isDeleted || activeSection === "trash");
+        // Todos los correos excepto eliminados
+        filtered = filtered.filter((e) => !e.isDeleted);
         break;
       default:
         break;
@@ -1149,16 +1149,24 @@ export default function MailboxPage() {
                           {/* Indicadores de estado */}
                           <div className="flex items-center gap-1">
                             {email.isStarred && (
-                              <Star className="w-3 h-3 text-yellow-500 fill-current" title="Destacado" />
+                              <span title="Destacado">
+                                <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                              </span>
                             )}
                             {email.isImportant && (
-                              <AlertCircle className="w-3 h-3 text-[#14b4a1]" title="Importante" />
+                              <span title="Importante">
+                                <AlertCircle className="w-3 h-3 text-[#14b4a1]" />
+                              </span>
                             )}
                             {email.isSpam && (
-                              <AlertCircle className="w-3 h-3 text-orange-500" title="Spam" />
+                              <span title="Spam">
+                                <AlertCircle className="w-3 h-3 text-orange-500" />
+                              </span>
                             )}
                             {email.isArchived && (
-                              <Archive className="w-3 h-3 text-gray-400" title="Archivado" />
+                              <span title="Archivado">
+                                <Archive className="w-3 h-3 text-gray-400" />
+                              </span>
                             )}
                           </div>
                           

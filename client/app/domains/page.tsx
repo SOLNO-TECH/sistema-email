@@ -152,7 +152,12 @@ export default function DomainsPage() {
   const handleSaveSmtp = async (domainId: number) => {
     setSavingSmtp(true);
     try {
-      await apiClient.updateDomainSmtp(domainId, smtpConfig);
+      // Convertir "" a undefined para campos opcionales
+      const configToSend = {
+        ...smtpConfig,
+        smtpProvider: smtpConfig.smtpProvider === "" ? undefined : smtpConfig.smtpProvider,
+      };
+      await apiClient.updateDomainSmtp(domainId, configToSend);
       toast.success("Configuración SMTP guardada");
       setSmtpDialogOpen(null);
       await loadDomains();
