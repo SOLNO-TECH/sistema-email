@@ -9,9 +9,7 @@ const nextConfig: NextConfig = {
   },
   // Deshabilitar indicadores de desarrollo (botón de Turbo Pack en la esquina)
   // Esto oculta el botón que muestra información de rutas y Turbo Pack
-  devIndicators: {
-    buildActivity: false,
-  },
+  // devIndicators ya no acepta buildActivity en esta versión de Next.js
   // Optimización de imágenes para SEO
   images: {
     formats: ['image/avif', 'image/webp'],

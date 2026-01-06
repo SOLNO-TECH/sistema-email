@@ -859,6 +859,11 @@ class ApiClient {
     });
   }
 
+  // Obtener créditos del usuario
+  async getUserCredits(): Promise<{ credits: number }> {
+    return this.request("/api/user-settings/credits");
+  }
+
   // Admin methods
   async getSystemStats(): Promise<{
     stats: {

@@ -86,13 +86,38 @@ Guarda con `Ctrl+X`, luego `Y`, luego `Enter`
 
 ### 6. Configurar Prisma
 
+**IMPORTANTE:** Asegúrate de estar en el directorio `server/` antes de ejecutar Prisma.
+
 ```bash
+# Ir al directorio server
+cd server
+
+# Verificar que las dependencias estén instaladas
+npm install
+
 # Generar cliente
 npx prisma generate
 
+# Si obtienes "Permission denied", prueba:
+npm exec prisma generate
+
+# O instala Prisma globalmente (alternativa):
+npm install -g prisma
+prisma generate
+
 # Ejecutar migraciones
 npx prisma migrate deploy
+# o
+npm exec prisma migrate deploy
+
+# Inicializar planes en la base de datos (IMPORTANTE)
+npm run init-plans
 ```
+
+**✅ Verificación:** Si todo salió bien, deberías ver:
+- `✔ Generated Prisma Client` (al generar)
+- `No pending migrations to apply` (al migrar)
+- Mensaje de confirmación al inicializar planes
 
 ### 7. Configurar Postfix (Servidor de Correo)
 
@@ -220,6 +245,40 @@ pm2 startup
 ```
 
 ## 🆘 Problemas Comunes
+
+### Error: "prisma: Permission denied"
+
+Este error ocurre cuando Prisma no tiene permisos de ejecución o las dependencias no están instaladas correctamente.
+
+**Solución 1: Verificar dependencias e instalar**
+```bash
+cd server
+npm install
+npm exec prisma generate
+```
+
+**Solución 2: Usar npm exec en lugar de npx**
+```bash
+cd server
+npm exec prisma generate
+npm exec prisma migrate deploy
+```
+
+**Solución 3: Verificar permisos y reinstalar**
+```bash
+cd server
+rm -rf node_modules package-lock.json
+npm install
+npm exec prisma generate
+```
+
+**Solución 4: Instalar Prisma globalmente (último recurso)**
+```bash
+npm install -g prisma @prisma/client
+cd server
+prisma generate
+prisma migrate deploy
+```
 
 ### Error: "Port already in use"
 ```bash
