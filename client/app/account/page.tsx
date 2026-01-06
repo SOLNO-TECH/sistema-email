@@ -242,6 +242,7 @@ export default function AccountPage() {
     const password = prompt("Ingrese su contraseña para deshabilitar 2FA:");
     if (!password) return;
     
+    
     setIsSaving(true);
     try {
       await apiClient.disable2FA(password);
