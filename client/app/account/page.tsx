@@ -247,7 +247,7 @@ export default function AccountPage() {
       await apiClient.disable2FA(password);
       await apiClient.updateSecuritySettings({
         twoFactorEnabled: false,
-        twoFactorMethod: null,
+        twoFactorMethod: undefined,
       });
       setTwoFactorEnabled(false);
       setTwoFactorMethod(null);
