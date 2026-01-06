@@ -129,7 +129,7 @@ export default function AdminPage() {
   }>>([]);
 
   // Email Accounts state
-  const [emailAccounts, setEmailAccounts] = useState<(EmailAccount & { domain: { id: number; domainName: string; dnsVerified: boolean }; owner?: { id: number; name: string; email: string }; _count: { emails: number } })[]>([]);
+  const [emailAccounts, setEmailAccounts] = useState<(EmailAccount & { domain: { id: number; domainName: string; dnsVerified: boolean }; owner?: { id: number; name: string; email: string }; _count: { emails: number }; createdAt: string })[]>([]);
 
   // Promo Codes state
   const [promoCodes, setPromoCodes] = useState<Array<{
@@ -2003,7 +2003,7 @@ function EmailAccountsTab({
   emailAccounts,
   onDelete,
 }: {
-  emailAccounts: (EmailAccount & { domain: { id: number; domainName: string; dnsVerified: boolean }; owner?: { id: number; name: string; email: string }; _count: { emails: number } })[];
+  emailAccounts: (EmailAccount & { domain: { id: number; domainName: string; dnsVerified: boolean }; owner?: { id: number; name: string; email: string }; _count: { emails: number }; createdAt: string })[];
   onDelete: (id: number) => void;
 }) {
   return (
