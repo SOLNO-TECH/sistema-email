@@ -116,9 +116,13 @@ export default function AccountPage() {
       if (data.security) {
         setTwoPasswordMode(data.security.twoPasswordMode || false);
         setTwoFactorEnabled(data.security.twoFactorEnabled || false);
-        setTwoFactorMethod(data.security.twoFactorMethod || null);
-        setAuthAppEnabled(data.security.twoFactorEnabled && data.security.twoFactorMethod === "app");
-        setSecurityKeyEnabled(data.security.twoFactorEnabled && data.security.twoFactorMethod === "security_key");
+        // Validar que twoFactorMethod sea uno de los valores permitidos
+        const method = data.security.twoFactorMethod;
+        const validMethod: "app" | "security_key" | null = 
+          method === "app" || method === "security_key" ? method : null;
+        setTwoFactorMethod(validMethod);
+        setAuthAppEnabled(data.security.twoFactorEnabled && method === "app");
+        setSecurityKeyEnabled(data.security.twoFactorEnabled && method === "security_key");
       }
     } catch (error: any) {
       console.error("Error loading security data:", error);
