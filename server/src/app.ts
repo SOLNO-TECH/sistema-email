@@ -89,8 +89,8 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : [
       "http://localhost:3000",
       "http://127.0.0.1:3000",
-      "http://localhost:3001",
-      "http://127.0.0.1:3001",
+      "http://localhost:3002",
+      "http://127.0.0.1:3002",
     ];
 
 app.use(cors({
@@ -164,7 +164,7 @@ console.log("  - /api/user-settings (preferencias, recuperación, créditos, seg
 console.log("  - /api/notifications (sistema de notificaciones)");
 
 // Servidor escuchando
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, async () => {
   console.log(`Backend corriendo en http://localhost:${PORT}`);
   

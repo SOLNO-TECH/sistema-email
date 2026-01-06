@@ -17,9 +17,9 @@ DATABASE_URL="mysql://usuario:password@localhost:3306/sistema_email"
 JWT_SECRET="cambia-este-secret-por-uno-seguro-y-aleatorio"
 
 # Servidor - PUERTOS (cambia estos valores según necesites)
-BACKEND_PORT=3001
+BACKEND_PORT=3002
 FRONTEND_PORT=3000
-PORT=3001  # Puerto del backend (debe coincidir con BACKEND_PORT)
+PORT=3002  # Puerto del backend (debe coincidir con BACKEND_PORT)
 NODE_ENV=production
 
 # Stripe - Para pagos con tarjeta de crédito/débito
