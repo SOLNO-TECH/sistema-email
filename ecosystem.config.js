@@ -32,9 +32,9 @@ module.exports = {
     },
     {
       name: 'sistema-email-client',
-      // Con output: 'standalone' en next.config.ts, Next.js genera .next/standalone/server.js
+      // Con output: 'standalone' en next.config.ts, Next.js genera .next/standalone/client/server.js
       // Este archivo se ejecuta directamente con Node.js, no con "next start"
-      script: '.next/standalone/server.js',
+      script: '.next/standalone/client/server.js',
       interpreter: 'node',
       cwd: './client',
       env: {

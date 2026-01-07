@@ -455,11 +455,14 @@ if sudo lsof -Pi :$FRONTEND_PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
     sleep 2
 fi
 
-# Frontend: con output: 'standalone' en next.config.ts, Next.js genera .next/standalone/server.js
+# Frontend: con output: 'standalone' en next.config.ts, Next.js genera .next/standalone/client/server.js
 # Este archivo se ejecuta directamente, no con "next start"
 cd "$PROJECT_ROOT/client" || exit 1
-if [ -f ".next/standalone/server.js" ]; then
-    echo "   Usando servidor standalone de Next.js"
+if [ -f ".next/standalone/client/server.js" ]; then
+    echo "   Usando servidor standalone de Next.js (.next/standalone/client/server.js)"
+    PORT=$FRONTEND_PORT pm2 start .next/standalone/client/server.js --name "fylo-frontend" --cwd "$(pwd)"
+elif [ -f ".next/standalone/server.js" ]; then
+    echo "   Usando servidor standalone de Next.js (.next/standalone/server.js)"
     PORT=$FRONTEND_PORT pm2 start .next/standalone/server.js --name "fylo-frontend" --cwd "$(pwd)"
 elif [ -f ".next/server.js" ]; then
     echo "   Usando servidor de Next.js (sin standalone)"
