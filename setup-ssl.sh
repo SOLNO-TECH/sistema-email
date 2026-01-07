@@ -199,6 +199,42 @@ else
 fi
 echo ""
 
+# Actualizar URLs en .env a HTTPS (después de configurar SSL)
+echo -e "${BLUE}🔄 Actualizando URLs a HTTPS...${NC}"
+if [ -f "server/.env" ]; then
+    # Obtener puertos del .env actual o usar valores por defecto
+    BACKEND_PORT=$(grep "^BACKEND_PORT=" server/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "3001")
+    FRONTEND_PORT=$(grep "^FRONTEND_PORT=" server/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "3000")
+    
+    # Actualizar FRONTEND_URL y ALLOWED_ORIGINS a HTTPS
+    sed -i "s|FRONTEND_URL=\"http://|FRONTEND_URL=\"https://|g" server/.env
+    sed -i "s|ALLOWED_ORIGINS=\"http://|ALLOWED_ORIGINS=\"https://|g" server/.env
+    
+    # Asegurarse de que usen el dominio correcto (no IP)
+    sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=\"https://$DOMAIN\"|g" server/.env
+    sed -i "s|ALLOWED_ORIGINS=.*|ALLOWED_ORIGINS=\"https://$DOMAIN\"|g" server/.env
+    
+    echo "✅ URLs actualizadas a HTTPS en server/.env"
+fi
+
+# Actualizar .env.local del cliente con HTTPS
+if [ -f "client/.env.local" ]; then
+    # Actualizar NEXT_PUBLIC_API_URL a HTTPS
+    BACKEND_PORT=$(grep "^BACKEND_PORT=" server/.env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "3001")
+    if [ -n "$BACKEND_PORT" ]; then
+        echo "NEXT_PUBLIC_API_URL=https://$DOMAIN:$BACKEND_PORT" > client/.env.local
+    else
+        echo "NEXT_PUBLIC_API_URL=https://$DOMAIN:3001" > client/.env.local
+    fi
+    echo "✅ URL del backend actualizada a HTTPS en client/.env.local"
+    
+    # Reiniciar frontend para cargar nueva configuración
+    echo "   Reiniciando frontend para aplicar cambios..."
+    pm2 restart fylo-frontend 2>/dev/null || true
+fi
+
+echo ""
+
 # Verificación final
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}✅ SSL configurado exitosamente!${NC}"
