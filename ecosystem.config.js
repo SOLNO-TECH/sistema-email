@@ -7,7 +7,8 @@ module.exports = {
     {
       name: 'sistema-email-server',
       // En producción es más robusto ejecutar el build compilado (evita depender de ts-node global)
-      script: 'dist/app.js',
+      // El archivo compilado está en dist/src/app.js porque tsconfig.json incluye "src"
+      script: 'dist/src/app.js',
       interpreter: 'node',
       cwd: './server',
       env: {

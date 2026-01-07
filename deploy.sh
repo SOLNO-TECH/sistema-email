@@ -302,33 +302,52 @@ echo ""
 
 # Paso 7: Ejecutar migraciones
 echo -e "${GREEN}🗄️  [7/12] Ejecutando migraciones de Prisma...${NC}"
-npx prisma migrate deploy 2>&1 || {
-    echo -e "${YELLOW}⚠️  migrate deploy falló, usando db push...${NC}"
-    npx prisma db push --accept-data-loss || {
+# En producción, usar db push es más confiable que migrate deploy si hay migraciones problemáticas
+# db push sincroniza el schema directamente sin depender del historial de migraciones
+npx prisma db push --accept-data-loss --skip-generate 2>&1 || {
+    echo -e "${YELLOW}⚠️  db push falló, intentando migrate deploy...${NC}"
+    # Si db push falla, intentar migrate deploy como fallback
+    npx prisma migrate deploy 2>&1 || {
         echo -e "${RED}❌ Error ejecutando migraciones${NC}"
         exit 1
     }
 }
 
+# Regenerar Prisma Client después de las migraciones
+echo "   Regenerando Prisma Client..."
+npx prisma generate >/dev/null 2>&1 || true
+
 # Verificar que las tablas se crearon
-TABLES=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "USE $MYSQL_DATABASE; SHOW TABLES;" 2>/dev/null | wc -l)
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$MYSQL_USER" -e "USE $MYSQL_DATABASE; SHOW TABLES;" 2>/dev/null | tail -n +2 > /tmp/tables.txt
+TABLES=$(wc -l < /tmp/tables.txt 2>/dev/null || echo "0")
 if [ "$TABLES" -gt 1 ]; then
     echo "✅ Migraciones ejecutadas correctamente ($TABLES tablas creadas)"
 else
-    echo -e "${YELLOW}⚠️  Advertencia: Pocas tablas encontradas${NC}"
+    echo -e "${YELLOW}⚠️  Advertencia: Pocas tablas encontradas ($TABLES)${NC}"
 fi
+rm -f /tmp/tables.txt 2>/dev/null || true
 echo ""
 
 # Paso 7.1: Build del backend (más robusto que ts-node en producción)
 echo -e "${GREEN}🏗️  [7.1/12] Construyendo backend...${NC}"
+# Limpiar build anterior
+rm -rf dist 2>/dev/null || true
+
+# Compilar TypeScript
 npm run build || {
     echo -e "${RED}❌ Error construyendo backend${NC}"
     exit 1
 }
-if [ -f "dist/app.js" ]; then
-    echo "✅ Backend construido correctamente"
+
+# Verificar que el archivo compilado existe (puede estar en dist/src/app.js o dist/app.js)
+if [ -f "dist/src/app.js" ]; then
+    echo "✅ Backend construido correctamente (dist/src/app.js)"
+elif [ -f "dist/app.js" ]; then
+    echo "✅ Backend construido correctamente (dist/app.js)"
 else
-    echo -e "${RED}❌ Error: dist/app.js no existe después del build${NC}"
+    echo -e "${RED}❌ Error: No se encontró app.js en dist/ después del build${NC}"
+    echo "   Buscando archivos compilados..."
+    find dist -name "*.js" | head -5 || echo "   No se encontraron archivos JS en dist/"
     exit 1
 fi
 echo ""

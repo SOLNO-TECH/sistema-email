@@ -6,7 +6,7 @@
     "dev": "nodemon --watch src --watch routes --watch controllers --watch lib --exec ts-node src/app.ts",
     "build": "tsc",
     "start": "ts-node src/app.ts",
-    "start:prod": "node dist/app.js",
+    "start:prod": "node dist/src/app.js",
     "wipe": "ts-node scripts/wipe-and-init.ts",
     "init-plans": "ts-node scripts/init-plans.ts"
   },
