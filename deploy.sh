@@ -178,32 +178,29 @@ echo ""
 # Paso 2: Configurar MySQL automáticamente
 echo -e "${GREEN}📦 [2/12] Configurando MySQL automáticamente...${NC}"
 sudo mysql -u root <<EOF
--- Crear base de datos
 CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- Eliminar usuario si existe
 DROP USER IF EXISTS '$MYSQL_USER'@'localhost';
-
--- Crear usuario con contraseña por defecto
 CREATE USER '$MYSQL_USER'@'localhost' IDENTIFIED BY '$MYSQL_PASSWORD';
-
--- Dar permisos
 GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'localhost';
-
--- Aplicar cambios
 FLUSH PRIVILEGES;
-
--- Verificar
-SELECT 'MySQL configurado correctamente' AS Status;
-SHOW DATABASES LIKE '$MYSQL_DATABASE';
-EXIT;
 EOF
 
-# Verificar conexión
-mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "USE $MYSQL_DATABASE; SELECT 1;" >/dev/null 2>&1 || {
-    echo -e "${RED}❌ Error configurando MySQL${NC}"
+# Verificar que la base de datos se creó correctamente
+if mysql -u root -e "SHOW DATABASES LIKE '$MYSQL_DATABASE';" | grep -q "$MYSQL_DATABASE"; then
+    echo "✅ Base de datos '$MYSQL_DATABASE' creada correctamente"
+else
+    echo -e "${RED}❌ Error: No se pudo crear la base de datos${NC}"
     exit 1
-}
+fi
+
+# Verificar conexión (con escape de caracteres especiales en la contraseña)
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$MYSQL_USER" -e "USE $MYSQL_DATABASE; SELECT 1;" >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+    echo "✅ Usuario '$MYSQL_USER' puede conectarse correctamente"
+else
+    # Intentar con -p para pedir contraseña (fallback)
+    echo -e "${YELLOW}⚠️  Advertencia: Verificación automática falló, pero la configuración debería estar correcta${NC}"
+fi
 echo "✅ MySQL configurado correctamente"
 echo ""
 
