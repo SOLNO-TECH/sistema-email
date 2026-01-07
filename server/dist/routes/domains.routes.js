@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const domains_controller_1 = require("../controllers/domains.controller");
+const auth_middleware_1 = require("../src/middleware/auth.middleware");
+const r = (0, express_1.Router)();
+r.post("/", auth_middleware_1.authMiddleware, domains_controller_1.addDomain);
+r.get("/", auth_middleware_1.authMiddleware, domains_controller_1.listDomains);
+r.post("/:id/verify", auth_middleware_1.authMiddleware, domains_controller_1.verifyDomain);
+r.put("/:id/smtp", auth_middleware_1.authMiddleware, domains_controller_1.updateDomainSmtp);
+r.delete("/:id", auth_middleware_1.authMiddleware, domains_controller_1.deleteDomain);
+exports.default = r;

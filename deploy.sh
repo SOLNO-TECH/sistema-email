@@ -19,12 +19,19 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Configuración por defecto (NO CAMBIAR - configurado automáticamente)
-MYSQL_USER="sistema_email_user"
-MYSQL_PASSWORD="SistemaEmail2024!"
-MYSQL_DATABASE="sistema_email"
-BACKEND_PORT=3001
-FRONTEND_PORT=3000
+# Configuración por defecto (puedes sobreescribir con variables de entorno)
+# Ejemplo:
+#   sudo DOMAIN=mail.tudominio.com BACKEND_PORT=3001 FRONTEND_PORT=3000 ./deploy.sh
+MYSQL_USER="${MYSQL_USER:-sistema_email_user}"
+MYSQL_DATABASE="${MYSQL_DATABASE:-sistema_email}"
+BACKEND_PORT="${BACKEND_PORT:-3001}"
+FRONTEND_PORT="${FRONTEND_PORT:-3000}"
+DOMAIN="${DOMAIN:-mail.fylo.es}"
+
+# Generar contraseñas seguras si no se proveen (evita hardcode y reduce fallos por credenciales duplicadas)
+if [ -z "${MYSQL_PASSWORD:-}" ]; then
+    MYSQL_PASSWORD="$(openssl rand -base64 32 | tr -d '/+=' | head -c 24)"
+fi
 
 echo -e "${YELLOW}⚙️  Configuración automática:${NC}"
 echo "   MySQL User: $MYSQL_USER"
@@ -32,6 +39,56 @@ echo "   MySQL Password: $MYSQL_PASSWORD"
 echo "   MySQL Database: $MYSQL_DATABASE"
 echo "   Backend Port: $BACKEND_PORT"
 echo "   Frontend Port: $FRONTEND_PORT"
+echo "   Domain: $DOMAIN"
+echo ""
+
+# Detectar dominio o IP
+echo -e "${BLUE}🔍 Detectando dominio/IP del servidor...${NC}"
+IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || echo "localhost")
+
+# Verificar si el dominio resuelve correctamente
+DOMAIN_RESOLVES=false
+if command -v dig &> /dev/null; then
+    DOMAIN_IP=$(dig +short $DOMAIN 2>/dev/null | head -n 1)
+    if [ ! -z "$DOMAIN_IP" ] && [ "$DOMAIN_IP" != "" ]; then
+        # Verificar que el dominio apunta a esta IP o es accesible
+        if ping -c 1 -W 2 $DOMAIN &>/dev/null; then
+            DOMAIN_RESOLVES=true
+            echo -e "${GREEN}✅ Dominio $DOMAIN resuelve correctamente (IP: $DOMAIN_IP)${NC}"
+        fi
+    fi
+elif command -v nslookup &> /dev/null; then
+    DOMAIN_IP=$(nslookup $DOMAIN 2>/dev/null | grep -A 1 "Name:" | grep "Address:" | awk '{print $2}' | head -n 1)
+    if [ ! -z "$DOMAIN_IP" ] && [ "$DOMAIN_IP" != "" ]; then
+        if ping -c 1 -W 2 $DOMAIN &>/dev/null 2>&1; then
+            DOMAIN_RESOLVES=true
+            echo -e "${GREEN}✅ Dominio $DOMAIN resuelve correctamente (IP: $DOMAIN_IP)${NC}"
+        fi
+    fi
+else
+    # Intentar ping directo
+    if ping -c 1 -W 2 $DOMAIN &>/dev/null 2>&1; then
+        DOMAIN_RESOLVES=true
+        echo -e "${GREEN}✅ Dominio $DOMAIN es accesible${NC}"
+    fi
+fi
+
+# Determinar URL base
+if [ "$DOMAIN_RESOLVES" = true ]; then
+    BASE_URL="http://$DOMAIN"
+    FRONTEND_URL_FULL="http://$DOMAIN:$FRONTEND_PORT"
+    BACKEND_URL_FULL="http://$DOMAIN:$BACKEND_PORT"
+    echo -e "${GREEN}✅ Usando dominio: $BASE_URL${NC}"
+else
+    BASE_URL="http://$IP"
+    FRONTEND_URL_FULL="http://$IP:$FRONTEND_PORT"
+    BACKEND_URL_FULL="http://$IP:$BACKEND_PORT"
+    echo -e "${YELLOW}⚠️  Dominio no resuelve, usando IP: $IP${NC}"
+    echo -e "${YELLOW}   Configura los DNS de $DOMAIN para apuntar a $IP${NC}"
+fi
+
+echo "   Frontend URL: $FRONTEND_URL_FULL"
+echo "   Backend URL: $BACKEND_URL_FULL"
 echo ""
 
 # Paso 0: Instalar servicios del sistema
@@ -40,6 +97,8 @@ echo -e "${GREEN}📦 [0/X] Instalando servicios del sistema...${NC}"
 # Verificar e instalar Node.js 20.x
 if ! command -v node &> /dev/null; then
     echo "   Instalando Node.js 20.x..."
+    apt update
+    apt install -y curl ca-certificates
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
     apt install -y nodejs
     echo -e "${GREEN}✅ Node.js instalado: $(node --version)${NC}"
@@ -88,7 +147,10 @@ else
 fi
 
 # Instalar herramientas necesarias
-apt install -y curl wget git build-essential openssl 2>/dev/null || true
+apt install -y curl wget git build-essential openssl lsof psmisc dnsutils 2>/dev/null || true
+
+# Asegurar carpeta de logs del proyecto (para PM2/ecosystem)
+mkdir -p "$(dirname "$0")/logs" 2>/dev/null || true
 
 # Configurar firewall básico
 if command -v ufw &> /dev/null; then
@@ -159,6 +221,16 @@ cd "$PROJECT_ROOT/server" || exit 1
 # Generar JWT_SECRET seguro
 JWT_SECRET=$(openssl rand -base64 32)
 
+# Configurar ALLOWED_ORIGINS para CORS (incluir dominio e IP)
+ALLOWED_ORIGINS="$FRONTEND_URL_FULL"
+if [ "$DOMAIN_RESOLVES" = true ]; then
+    # Si el dominio resuelve, agregar también la IP por si acaso
+    ALLOWED_ORIGINS="$FRONTEND_URL_FULL,http://$IP:$FRONTEND_PORT"
+else
+    # Si no resuelve, solo usar IP
+    ALLOWED_ORIGINS="$FRONTEND_URL_FULL"
+fi
+
 # Crear archivo .env automáticamente
 cat > .env <<EOF
 # Base de datos MySQL (configuración automática)
@@ -173,22 +245,25 @@ BACKEND_PORT=$BACKEND_PORT
 FRONTEND_PORT=$FRONTEND_PORT
 NODE_ENV=production
 
-# Frontend URL (para CORS)
-FRONTEND_URL="http://localhost:$FRONTEND_PORT"
+# URLs (configuradas automáticamente según dominio/IP)
+FRONTEND_URL="$FRONTEND_URL_FULL"
+ALLOWED_ORIGINS="$ALLOWED_ORIGINS"
 
-# Email SMTP (Postfix local - usar valores por defecto)
-EMAIL_SMTP_HOST="localhost"
+# Email SMTP (opcional)
+# Dejar vacío evita errores si Postfix/SMTP no está configurado aún.
+EMAIL_SMTP_HOST=""
 EMAIL_SMTP_PORT="587"
-EMAIL_SMTP_USER="admin@fylomail.es"
-EMAIL_SMTP_PASSWORD="SistemaEmail2024!"
+EMAIL_SMTP_USER=""
+EMAIL_SMTP_PASSWORD=""
+EMAIL_FROM_NAME="Fylo Mail"
 
-# IMAP
-IMAP_HOST="localhost"
+# IMAP (opcional)
+IMAP_HOST=""
 IMAP_PORT="993"
 IMAP_SECURE="true"
 
 # Sincronización automática de correos
-ENABLE_EMAIL_SYNC="true"
+ENABLE_EMAIL_SYNC="false"
 EMAIL_SYNC_INTERVAL="5"
 EOF
 
@@ -197,10 +272,11 @@ echo ""
 
 # Paso 5: Instalar dependencias del Backend
 echo -e "${GREEN}📚 [5/12] Instalando dependencias del backend...${NC}"
-if [ ! -d "node_modules" ]; then
-    npm install
+if [ -f "package-lock.json" ]; then
+    rm -rf node_modules
+    npm ci
 else
-    echo "   Dependencias ya instaladas, omitiendo..."
+    npm install
 fi
 echo "✅ Dependencias instaladas"
 echo ""
@@ -246,6 +322,20 @@ else
 fi
 echo ""
 
+# Paso 7.1: Build del backend (más robusto que ts-node en producción)
+echo -e "${GREEN}🏗️  [7.1/12] Construyendo backend...${NC}"
+npm run build || {
+    echo -e "${RED}❌ Error construyendo backend${NC}"
+    exit 1
+}
+if [ -f "dist/app.js" ]; then
+    echo "✅ Backend construido correctamente"
+else
+    echo -e "${RED}❌ Error: dist/app.js no existe después del build${NC}"
+    exit 1
+fi
+echo ""
+
 # Paso 8: Inicializar planes
 echo -e "${GREEN}📋 [8/12] Inicializando planes en la base de datos...${NC}"
 npm run init-plans 2>&1 || {
@@ -267,7 +357,7 @@ if sudo lsof -Pi :$BACKEND_PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
     sleep 2
 fi
 
-pm2 start npm --name "fylo-backend" -- start
+pm2 start npm --name "fylo-backend" -- start:prod
 pm2 save
 sleep 5
 
@@ -285,25 +375,22 @@ echo ""
 echo -e "${GREEN}🌐 [10/12] Configurando frontend...${NC}"
 cd "$PROJECT_ROOT/client" || exit 1
 
-# Obtener IP del servidor
-IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || echo "localhost")
-echo "   IP detectada: $IP"
-
-# Crear archivo .env.local automáticamente
+# Crear archivo .env.local automáticamente con la URL del backend
 cat > .env.local <<EOF
-NEXT_PUBLIC_API_URL=http://${IP}:${BACKEND_PORT}
+NEXT_PUBLIC_API_URL=$BACKEND_URL_FULL
 EOF
 
 echo "✅ Archivo .env.local creado automáticamente"
-echo "   NEXT_PUBLIC_API_URL=http://${IP}:${BACKEND_PORT}"
+echo "   NEXT_PUBLIC_API_URL=$BACKEND_URL_FULL"
 echo ""
 
 # Instalar dependencias del Frontend
 echo "📚 Instalando dependencias del frontend..."
-if [ ! -d "node_modules" ]; then
-    npm install
+if [ -f "package-lock.json" ]; then
+    rm -rf node_modules
+    npm ci
 else
-    echo "   Dependencias ya instaladas, omitiendo..."
+    npm install
 fi
 echo "✅ Dependencias instaladas"
 echo ""
@@ -336,7 +423,7 @@ if sudo lsof -Pi :$FRONTEND_PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
     sleep 2
 fi
 
-pm2 start npm --name "fylo-frontend" -- start
+pm2 start npm --name "fylo-frontend" -- start -- -p $FRONTEND_PORT
 pm2 save
 sleep 5
 
@@ -370,9 +457,14 @@ echo "📊 Estado de PM2:"
 pm2 status
 echo ""
 echo "🌐 URLs de acceso:"
-IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || echo "localhost")
-echo "   Frontend: http://${IP}:$FRONTEND_PORT"
-echo "   Backend:  http://${IP}:$BACKEND_PORT"
+echo "   Frontend: $FRONTEND_URL_FULL"
+echo "   Backend:  $BACKEND_URL_FULL"
+if [ "$DOMAIN_RESOLVES" = false ]; then
+    echo ""
+    echo -e "${YELLOW}⚠️  IMPORTANTE: Configura los DNS de $DOMAIN${NC}"
+    echo "   Tipo A: $DOMAIN -> $IP"
+    echo "   O usa directamente: http://$IP:$FRONTEND_PORT"
+fi
 echo ""
 echo "📝 Configuración MySQL (guardada automáticamente):"
 echo "   Usuario: $MYSQL_USER"

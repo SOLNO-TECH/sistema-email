@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const email_accounts_controller_1 = require("../controllers/email-accounts.controller");
+const auth_middleware_1 = require("../src/middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.post("/", auth_middleware_1.authMiddleware, email_accounts_controller_1.createEmailAccount);
+router.get("/", auth_middleware_1.authMiddleware, email_accounts_controller_1.listEmailAccounts);
+router.delete("/:id", auth_middleware_1.authMiddleware, email_accounts_controller_1.deleteEmailAccount);
+exports.default = router;

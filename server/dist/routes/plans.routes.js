@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const plans_controller_1 = require("../controllers/plans.controller");
+const auth_middleware_1 = require("../src/middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.get("/", plans_controller_1.listPlans);
+router.get("/:id", plans_controller_1.getPlan);
+router.get("/current/plan", auth_middleware_1.authMiddleware, plans_controller_1.getCurrentPlan);
+router.get("/current/limits", auth_middleware_1.authMiddleware, plans_controller_1.getUserLimits);
+exports.default = router;
