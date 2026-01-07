@@ -455,8 +455,10 @@ if sudo lsof -Pi :$FRONTEND_PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
     sleep 2
 fi
 
-# Frontend: usar npm run start con el puerto correcto
-pm2 start npm --name "fylo-frontend" --cwd "$(pwd)" -- run start -- -- -p $FRONTEND_PORT
+# Frontend: usar variable de entorno PORT (Next.js la respeta automáticamente)
+cd "$PROJECT_ROOT/client" || exit 1
+PORT=$FRONTEND_PORT pm2 start npm --name "fylo-frontend" --cwd "$(pwd)" -- run start
+cd "$PROJECT_ROOT" || exit 1
 pm2 save
 sleep 5
 

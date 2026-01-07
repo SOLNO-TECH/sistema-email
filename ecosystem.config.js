@@ -33,12 +33,12 @@ module.exports = {
     {
       name: 'sistema-email-client',
       script: 'npm',
-      // Forzar puerto explícito (evita arrancar en un puerto inesperado)
-      args: `start -- -p ${FRONTEND_PORT}`,
+      // Next.js respeta automáticamente la variable de entorno PORT (no necesita argumentos CLI)
+      args: 'start',
       cwd: './client',
       env: {
         NODE_ENV: 'production',
-        PORT: FRONTEND_PORT,
+        PORT: FRONTEND_PORT, // Next.js usa esta variable de entorno automáticamente
         BACKEND_PORT: BACKEND_PORT,
         FRONTEND_PORT: FRONTEND_PORT
       },
