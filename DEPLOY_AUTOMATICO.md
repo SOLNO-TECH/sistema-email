@@ -1,17 +1,28 @@
 # 🚀 Deploy Automático - Sin Configuración Manual
 
-## ✅ Todo Automático
+## ✅ Todo Automático - Instala TODO
 
 El script `deploy.sh` hace **TODO automáticamente**:
-- ✅ Crea usuario MySQL: `sistema_email_user` / `SistemaEmail2024!`
-- ✅ Crea base de datos: `sistema_email`
-- ✅ Configura Prisma y genera el cliente
-- ✅ Ejecuta todas las migraciones
-- ✅ Inicializa planes
-- ✅ Configura backend y frontend
-- ✅ Inicia todo con PM2
+- ✅ **Instala servicios del sistema:**
+  - Node.js 20.x
+  - PM2 (gestor de procesos)
+  - MySQL Server
+  - Postfix y Dovecot (servidor de correo)
+  - Herramientas necesarias (curl, git, build-essential, etc.)
+  - Configura firewall automáticamente
+  
+- ✅ **Configura base de datos:**
+  - Crea usuario MySQL: `sistema_email_user` / `SistemaEmail2024!`
+  - Crea base de datos: `sistema_email`
+  
+- ✅ **Configura aplicación:**
+  - Configura Prisma y genera el cliente
+  - Ejecuta todas las migraciones (crea tablas)
+  - Inicializa planes
+  - Configura backend y frontend
+  - Inicia todo con PM2
 
-**No necesitas configurar NADA manualmente.**
+**No necesitas instalar NADA manualmente. El script lo hace TODO.**
 
 ## 📋 Instalación en VPS (3 Pasos)
 
