@@ -373,16 +373,32 @@ if sudo lsof -Pi :$BACKEND_PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
     sleep 2
 fi
 
-pm2 start npm --name "fylo-backend" -- start:prod
+# Usar directamente el archivo compilado (más robusto que npm)
+if [ -f "dist/src/app.js" ]; then
+    pm2 start dist/src/app.js --name "fylo-backend" --cwd "$(pwd)"
+elif [ -f "dist/app.js" ]; then
+    pm2 start dist/app.js --name "fylo-backend" --cwd "$(pwd)"
+else
+    # Fallback: usar npm run start:prod (con run)
+    echo -e "${YELLOW}⚠️  No se encontró dist/src/app.js, usando npm run start:prod${NC}"
+    pm2 start npm --name "fylo-backend" --cwd "$(pwd)" -- run start:prod
+fi
 pm2 save
 sleep 5
 
 # Verificar que el backend está corriendo
-if pm2 describe fylo-backend | grep -q "online"; then
+if pm2 describe fylo-backend 2>/dev/null | grep -q "online"; then
     echo "✅ Backend iniciado correctamente"
+    # Verificar que el proceso está realmente respondiendo
+    sleep 2
+    if pm2 describe fylo-backend 2>/dev/null | grep -q "errored\|stopped"; then
+        echo -e "${RED}❌ Error: Backend se detuvo después de iniciar${NC}"
+        pm2 logs fylo-backend --lines 30 --nostream
+        exit 1
+    fi
 else
     echo -e "${RED}❌ Error iniciando backend${NC}"
-    pm2 logs fylo-backend --lines 20
+    pm2 logs fylo-backend --lines 30 --nostream
     exit 1
 fi
 echo ""
@@ -439,16 +455,24 @@ if sudo lsof -Pi :$FRONTEND_PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
     sleep 2
 fi
 
-pm2 start npm --name "fylo-frontend" -- start -- -p $FRONTEND_PORT
+# Frontend: usar npm run start con el puerto correcto
+pm2 start npm --name "fylo-frontend" --cwd "$(pwd)" -- run start -- -- -p $FRONTEND_PORT
 pm2 save
 sleep 5
 
 # Verificar que el frontend está corriendo
-if pm2 describe fylo-frontend | grep -q "online"; then
+if pm2 describe fylo-frontend 2>/dev/null | grep -q "online"; then
     echo "✅ Frontend iniciado correctamente"
+    # Verificar que el proceso está realmente respondiendo
+    sleep 2
+    if pm2 describe fylo-frontend 2>/dev/null | grep -q "errored\|stopped"; then
+        echo -e "${RED}❌ Error: Frontend se detuvo después de iniciar${NC}"
+        pm2 logs fylo-frontend --lines 30 --nostream
+        exit 1
+    fi
 else
     echo -e "${RED}❌ Error iniciando frontend${NC}"
-    pm2 logs fylo-frontend --lines 20
+    pm2 logs fylo-frontend --lines 30 --nostream
     exit 1
 fi
 echo ""
