@@ -32,9 +32,10 @@ module.exports = {
     },
     {
       name: 'sistema-email-client',
-      script: 'npm',
-      // Next.js respeta automáticamente la variable de entorno PORT (no necesita argumentos CLI)
-      args: 'start',
+      // Con output: 'standalone' en next.config.ts, Next.js genera .next/standalone/server.js
+      // Este archivo se ejecuta directamente con Node.js, no con "next start"
+      script: '.next/standalone/server.js',
+      interpreter: 'node',
       cwd: './client',
       env: {
         NODE_ENV: 'production',
