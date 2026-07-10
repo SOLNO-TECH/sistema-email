@@ -7,7 +7,7 @@ if (!JWT_SECRET || JWT_SECRET === "dev_secret") {
   console.error("❌ ERROR CRÍTICO: JWT_SECRET no está configurado o usa el valor por defecto inseguro.");
   console.error("   Por favor, configura JWT_SECRET en tu archivo .env con un valor seguro y aleatorio.");
   if (process.env.NODE_ENV === "production") {
-    process.exit(1);
+    throw new Error("JWT_SECRET must be configured in production");
   }
 }
 
