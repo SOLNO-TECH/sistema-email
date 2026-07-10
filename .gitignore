@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (contienen secretos)
+.env
+.env.local
+.env.*.local
+server/.env
+client/.env.local
+
+# Artefactos de build
+server/dist/
+client/.next/
+client/out/
+
+# Runtime
+server/uploads/
+logs/
+backups/
+*.log
+
+# Sistema
+.DS_Store
