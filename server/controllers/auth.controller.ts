@@ -465,7 +465,7 @@ El equipo de Fylo Mail`,
     if (err.code === "P1001" || err.message?.includes("Can't reach database") || err.message?.includes("connect ECONNREFUSED")) {
       return res.status(500).json({ 
         error: "Database connection error",
-        message: "Please check your DATABASE_URL in .env file and ensure MySQL is running"
+        message: "Please check your DATABASE_URL in .env file and ensure the database is accessible"
       });
     }
     if (err.message?.includes("Unknown database")) {

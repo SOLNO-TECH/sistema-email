@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+mkdir -p /app/data /app/uploads
+
 echo "Aplicando migraciones de Prisma..."
 npx prisma migrate deploy
 

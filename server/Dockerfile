@@ -21,7 +21,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
-RUN chmod +x docker-entrypoint.sh && mkdir -p uploads
+RUN chmod +x docker-entrypoint.sh && mkdir -p uploads data
 
 EXPOSE 3001
 CMD ["./docker-entrypoint.sh"]

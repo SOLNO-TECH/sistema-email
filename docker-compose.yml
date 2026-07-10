@@ -1,34 +1,13 @@
 services:
-  mysql:
-    image: mysql:8.0
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    networks:
-      - dokploy-network
-
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
     restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
+      DATABASE_URL: file:/app/data/database.db
       JWT_SECRET: ${JWT_SECRET}
       FRONTEND_URL: ${FRONTEND_URL}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
@@ -47,6 +26,7 @@ services:
       EMAIL_SYNC_INTERVAL: ${EMAIL_SYNC_INTERVAL:-5}
     volumes:
       - uploads_data:/app/uploads
+      - sqlite_data:/app/data
     ports:
       - "3001"
     networks:
@@ -71,8 +51,8 @@ services:
       - dokploy-network
 
 volumes:
-  mysql_data:
   uploads_data:
+  sqlite_data:
 
 networks:
   dokploy-network:

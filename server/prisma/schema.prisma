@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -15,7 +15,7 @@ model User {
   role          String  @default("user") // "user" o "admin"
   phone         String? // Número telefónico
   paymentMethod String? // Método de pago principal (ej: "card", "bank_account", "paypal")
-  paymentDetails String? @db.Text // Detalles del método de pago (JSON stringificado)
+  paymentDetails String? // Detalles del método de pago (JSON stringificado)
   
   // Recuperación de cuenta
   recoveryEmail String? // Email de recuperación
@@ -26,26 +26,26 @@ model User {
   allowQRLogin Boolean @default(false)
   
   // Recuperación de datos
-  recoveryPhrase String? @db.Text // Frase de recuperación (encriptada)
+  recoveryPhrase String? // Frase de recuperación (encriptada)
   allowRecoveryPhrase Boolean @default(false)
   allowDeviceRecovery Boolean @default(false)
   recoveryFileHash String? // Hash del archivo de recuperación
   
   // Preferencias
-  preferences String? @db.Text // JSON con preferencias (notificaciones, idioma, hora, etc)
+  preferences String? // JSON con preferencias (notificaciones, idioma, hora, etc)
   
   // Créditos y códigos de regalo
   credits Float @default(0) // Créditos disponibles
-  appliedGiftCodes String? @db.Text // JSON array con códigos de regalo aplicados
+  appliedGiftCodes String? // JSON array con códigos de regalo aplicados
   
   // Seguridad avanzada
   twoPasswordMode Boolean @default(false)
   twoFactorEnabled Boolean @default(false)
   twoFactorMethod String? // "app" o "security_key"
-  twoFactorSecret String? @db.Text // Secret para 2FA (encriptado)
+  twoFactorSecret String? // Secret para 2FA (encriptado)
   
   // Contactos de emergencia
-  emergencyContacts String? @db.Text // JSON array con contactos de emergencia
+  emergencyContacts String? // JSON array con contactos de emergencia
 
   Domain Domain[]
 
@@ -78,12 +78,12 @@ model Domain {
   lastDnsCheck DateTime? // Última verificación DNS
   
   // Configuración SMTP para este dominio
-  smtpProvider String?  @db.VarChar(50) // "sendgrid", "mailgun", "smtp", "gmail"
+  smtpProvider String? // "sendgrid", "mailgun", "smtp", "gmail"
   smtpHost     String?  // Host SMTP personalizado
   smtpPort     Int?     // Puerto SMTP
   smtpUser     String?   // Usuario SMTP
-  smtpPassword String?   @db.Text // Contraseña SMTP (encriptada)
-  smtpApiKey   String?   @db.Text // API Key para servicios (SendGrid, Mailgun)
+  smtpPassword String?   // Contraseña SMTP (encriptada)
+  smtpApiKey   String?   // API Key para servicios (SendGrid, Mailgun)
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime?
@@ -104,7 +104,7 @@ model EmailAccount {
   smtpHost     String?  // Host SMTP personalizado para esta cuenta
   smtpPort     Int?     // Puerto SMTP
   smtpUser     String?   // Usuario SMTP (puede ser diferente de address)
-  smtpPassword String?   @db.Text // Contraseña SMTP (encriptada)
+  smtpPassword String?   // Contraseña SMTP (encriptada)
   
   createdAt   DateTime  @default(now())
 
@@ -122,15 +122,15 @@ model Email {
   emailAccountId Int     // Cuenta que recibió o envió el correo
   from          String    // Remitente
   to            String    // Destinatario
-  subject       String    @db.VarChar(500)
-  body          String    @db.Text
-  htmlBody      String?   @db.Text // Cuerpo HTML opcional
+  subject       String
+  body          String
+  htmlBody      String?   // Cuerpo HTML opcional
   isRead        Boolean   @default(false)
   isSent        Boolean   @default(false) // true si fue enviado, false si fue recibido
   messageId     String?   @unique // Message-ID del correo
   inReplyTo     String?   // Message-ID del correo al que responde
-  references    String?   @db.Text // Referencias del hilo
-  priority      String?   @db.VarChar(20) // "high", "normal", "low"
+  references    String?   // Referencias del hilo
+  priority      String? // "high", "normal", "low"
   receivedAt    DateTime  @default(now())
   sentAt        DateTime?
   
@@ -142,7 +142,7 @@ model Email {
   isDraft       Boolean   @default(false) // Borrador
   isDeleted     Boolean   @default(false) // Correo en papelera
   folderId      Int?      // ID de la carpeta (null = inbox)
-  labels        String?   @db.Text // JSON array con etiquetas
+  labels        String?   // JSON array con etiquetas
   scheduledFor  DateTime? // Fecha programada para envío
   
   // Relación
@@ -208,10 +208,10 @@ model Invoice {
 model Ticket {
   id          Int       @id @default(autoincrement())
   userId      Int
-  subject     String    @db.VarChar(255)
-  description String    @db.Text
-  status      String    @default("open") @db.VarChar(50) // "open", "in_progress", "resolved", "closed"
-  priority    String    @default("medium") @db.VarChar(50) // "low", "medium", "high", "urgent"
+  subject     String
+  description String
+  status      String    @default("open") // "open", "in_progress", "resolved", "closed"
+  priority    String    @default("medium") // "low", "medium", "high", "urgent"
   createdAt   DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -236,7 +236,7 @@ model TicketMessage {
   id        Int      @id @default(autoincrement())
   ticketId  Int
   userId    Int      // Usuario que envió el mensaje (puede ser el usuario o admin)
-  message   String   @db.Text
+  message   String
   createdAt DateTime @default(now())
 
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
@@ -264,7 +264,7 @@ model OAuthApplication {
   website     String?   // URL del sitio web
   clientId    String    @unique // Client ID único
   clientSecret String   // Client Secret (hasheado)
-  redirectUris String  @db.Text // JSON array de URIs permitidas
+  redirectUris String  // JSON array de URIs permitidas
   userId      Int      // Usuario que creó la aplicación
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -344,10 +344,10 @@ model PromoCode {
 model Notification {
   id          Int       @id @default(autoincrement())
   userId      Int       // Usuario destinatario
-  type        String    @db.VarChar(50) // "email", "system", "product_update", "announcement", etc.
-  category    String?   @db.VarChar(50) // "email_subscription", "product_update", "app", etc.
-  title       String    @db.VarChar(255)
-  message     String    @db.Text
+  type        String // "email", "system", "product_update", "announcement", etc.
+  category    String? // "email_subscription", "product_update", "app", etc.
+  title       String
+  message     String
   link        String?   // URL opcional para la notificación
   isRead      Boolean   @default(false)
   createdAt   DateTime  @default(now())

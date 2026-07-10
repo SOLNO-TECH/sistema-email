@@ -1,17 +1,10 @@
 # Archivo de ejemplo para variables de entorno en producción
 # Copia este archivo a .env y completa con tus valores reales
 
-# Base de datos MySQL
-# Formato: mysql://usuario:password@host:puerto/nombre_base_datos
-# Ejemplo: mysql://sistema_email_user:tu_password_seguro@localhost:3306/sistema_email
-DATABASE_URL="mysql://usuario:password@localhost:3306/sistema_email"
-
-# Nota: Usa el script setup-database.sh para crear la base de datos automáticamente
-# O crea manualmente:
-# CREATE DATABASE sistema_email CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-# CREATE USER 'sistema_email_user'@'localhost' IDENTIFIED BY 'tu_password';
-# GRANT ALL PRIVILEGES ON sistema_email.* TO 'sistema_email_user'@'localhost';
-# FLUSH PRIVILEGES;
+# Base de datos SQLite
+# Desarrollo local:
+DATABASE_URL="file:./data/database.db"
+# En Docker/Dokploy se configura automaticamente como file:/app/data/database.db
 
 # JWT
 JWT_SECRET="cambia-este-secret-por-uno-seguro-y-aleatorio"
