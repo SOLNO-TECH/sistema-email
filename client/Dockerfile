@@ -1,5 +1,6 @@
-# --- Build stage ---
+# --- Build ---
 FROM node:20-alpine AS builder
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package*.json ./
@@ -7,24 +8,24 @@ RUN npm ci
 
 COPY . .
 
-# NEXT_PUBLIC_* se inyecta en el bundle en tiempo de build
-ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_API_URL=""
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-RUN npm run build
+RUN NEXT_PRIVATE_SKIP_TURBO=1 npx next build
 
-# --- Runtime stage ---
+# --- Runtime ---
 FROM node:20-alpine AS runner
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
+
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
-
-RUN chmod +x docker-entrypoint.sh
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/next.config.ts ./next.config.ts
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3000
-CMD ["./docker-entrypoint.sh"]
+CMD ["npx", "next", "start", "-H", "0.0.0.0", "-p", "3000"]
