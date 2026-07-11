@@ -3,7 +3,6 @@ set -e
 
 mkdir -p /app/data /app/uploads
 
-# SQLite: ruta absoluta dentro del volumen Docker
 export DATABASE_URL="${DATABASE_URL:-file:/app/data/database.db}"
 
 if [ -z "$JWT_SECRET" ] || [ "$JWT_SECRET" = "dev_secret" ]; then
@@ -16,8 +15,11 @@ if [ -z "$JWT_SECRET" ] || [ "$JWT_SECRET" = "dev_secret" ]; then
 fi
 
 echo "DATABASE_URL=$DATABASE_URL"
-echo "Aplicando migraciones de Prisma..."
-npx prisma migrate deploy
+echo "Sincronizando base de datos SQLite..."
+if ! npx prisma migrate deploy; then
+  echo "migrate deploy fallo, usando db push..."
+  npx prisma db push --skip-generate
+fi
 
-echo "Iniciando servidor backend en puerto ${PORT:-3001}..."
+echo "Iniciando servidor backend en 0.0.0.0:${PORT:-3001}..."
 exec node dist/src/app.js

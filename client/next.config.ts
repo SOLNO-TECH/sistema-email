@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
   },
+  // Proxy de API al backend interno (un solo dominio en Dokploy)
+  async rewrites() {
+    const apiUrl = process.env.INTERNAL_API_URL || "http://server:3001";
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiUrl}/api/:path*`,
+      },
+    ];
+  },
   // Headers para SEO y seguridad
   async headers() {
     return [

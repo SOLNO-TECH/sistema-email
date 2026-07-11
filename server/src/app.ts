@@ -165,8 +165,8 @@ console.log("  - /api/notifications (sistema de notificaciones)");
 
 // Servidor escuchando
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, async () => {
-  console.log(`Backend corriendo en http://localhost:${PORT}`);
+app.listen(Number(PORT), "0.0.0.0", async () => {
+  console.log(`Backend corriendo en http://0.0.0.0:${PORT}`);
   
   // Asegurar que el admin por defecto existe al iniciar
   await ensureDefaultAdmin();

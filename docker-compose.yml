@@ -27,7 +27,7 @@ services:
     volumes:
       - uploads_data:/app/uploads
       - sqlite_data:/app/data
-    ports:
+    expose:
       - "3001"
     networks:
       - dokploy-network
@@ -37,7 +37,8 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+        # Vacio = mismo dominio (Next.js hace proxy /api -> server)
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
     restart: unless-stopped
     depends_on:
       - server
@@ -45,6 +46,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       HOSTNAME: 0.0.0.0
+      INTERNAL_API_URL: http://server:3001
     ports:
       - "3000"
     networks:
